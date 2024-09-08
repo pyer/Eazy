@@ -1,0 +1,8 @@
+group:   ab.eazy
+name:    util
+version: 12.2.0
+pattern: jar2
+
+dependencies:
+  - /org/slf4j/slf4j-api/2.0.13/slf4j-api-2.0.13.jar
+

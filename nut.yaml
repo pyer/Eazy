@@ -1,0 +1,10 @@
+group:   ab
+name:    eazy
+version: 12.2.0
+
+modules:
+  - http
+  - io
+  - server
+  - slf4j-impl
+  - util
