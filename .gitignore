@@ -1,6 +1,15 @@
 # vim backup files
 *~
 
+# Generic files to ignore
+*.lock
+*.DS_Store
+*.swp
+*.out
+
+# Nut target
+target
+
 # Compiled class file
 *.class
 
