@@ -5,6 +5,6 @@ version: 12.2.0
 modules:
   - http
   - io
+  - logging
   - server
-  - slf4j-impl
   - util
