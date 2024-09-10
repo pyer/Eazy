@@ -9,7 +9,7 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 // ========================================================================
-//
+// Example: private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
 package ab.eazy.logging;
 
@@ -19,54 +19,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import javax.management.Attribute;
-import javax.management.AttributeList;
-import javax.management.AttributeNotFoundException;
-import javax.management.DynamicMBean;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanConstructorInfo;
-import javax.management.MBeanException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanNotificationInfo;
-import javax.management.MBeanOperationInfo;
-import javax.management.MBeanParameterInfo;
-import javax.management.ReflectionException;
 
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
+import org.slf4j.event.Level;
 
-public class EazyLoggerFactory implements ILoggerFactory, DynamicMBean
+public class EazyLoggerFactory implements ILoggerFactory
 {
     private final EazyLoggerConfiguration configuration;
-    private final EazyLogger rootLogger;
     private final ConcurrentMap<String, EazyLogger> loggerMap;
-    private MBeanInfo mBeanInfo;
 
     public EazyLoggerFactory(EazyLoggerConfiguration config)
     {
         configuration = Objects.requireNonNull(config, "EazyLoggerConfiguration");
-
         loggerMap = new ConcurrentHashMap<>();
-
-        StdErrAppender appender = new StdErrAppender(configuration);
-
-        rootLogger = new EazyLogger(this, Logger.ROOT_LOGGER_NAME, appender);
-        loggerMap.put(Logger.ROOT_LOGGER_NAME, rootLogger);
-        rootLogger.setLevel(configuration.getLevel(Logger.ROOT_LOGGER_NAME));
+        EazyAppender appender = new EazyAppender(configuration);
     }
 
-    /**
-     * Get a {@link EazyLogger} instance, creating if not yet existing.
-     *
-     * @param name the name of the logger
-     * @return the EazyLogger instance
-     */
-    public EazyLogger getEazyLogger(String name)
-    {
-        if (name.equals(Logger.ROOT_LOGGER_NAME))
-            return getRootLogger();
-        return loggerMap.computeIfAbsent(name, this::createLogger);
-    }
 
     /**
      * Main interface for {@link ILoggerFactory}
@@ -77,7 +46,7 @@ public class EazyLoggerFactory implements ILoggerFactory, DynamicMBean
     @Override
     public Logger getLogger(String name)
     {
-        return getEazyLogger(name);
+        return loggerMap.computeIfAbsent(name, this::createLogger);
     }
 
     void walkChildrenLoggers(String parentName, Consumer<EazyLogger> childConsumer)
@@ -98,15 +67,10 @@ public class EazyLoggerFactory implements ILoggerFactory, DynamicMBean
         }
     }
 
-    EazyLogger getRootLogger()
-    {
-        return rootLogger;
-    }
-
     private EazyLogger createLogger(String name)
     {
-        EazyAppender appender = rootLogger.getAppender();
-        EazyLevel level = this.configuration.getLevel(name);
+        EazyAppender appender = new EazyAppender(this.configuration);
+        Level level = this.configuration.getLevel(name);
         boolean hideStacks = this.configuration.getHideStacks(name);
         return new EazyLogger(this, name, appender, level, hideStacks);
     }
@@ -135,6 +99,7 @@ public class EazyLoggerFactory implements ILoggerFactory, DynamicMBean
         return nameFunction.apply(Logger.ROOT_LOGGER_NAME);
     }
 
+/*
     public String[] getLoggerNames()
     {
         TreeSet<String> names = new TreeSet<>(loggerMap.keySet());
@@ -159,7 +124,7 @@ public class EazyLoggerFactory implements ILoggerFactory, DynamicMBean
 
     public boolean setLoggerLevel(String loggerName, String levelName)
     {
-        EazyLevel level = EazyLoggerConfiguration.toEazyLevel(loggerName, levelName);
+        Level level = EazyLoggerConfiguration.toEazyLevel(loggerName, levelName);
         if (level == null)
         {
             return false;
@@ -168,161 +133,5 @@ public class EazyLoggerFactory implements ILoggerFactory, DynamicMBean
         eazyLogger.setLevel(level);
         return true;
     }
-
-    @Override
-    public Object getAttribute(String name) throws AttributeNotFoundException
-    {
-        Objects.requireNonNull(name, "Attribute Name");
-
-        switch (name)
-        {
-            case "LoggerNames":
-                return getLoggerNames();
-            case "LoggerCount":
-                return getLoggerCount();
-            default:
-                throw new AttributeNotFoundException("Cannot find " + name + " attribute in " + this.getClass().getName());
-        }
-    }
-
-    @Override
-    public void setAttribute(Attribute attribute) throws AttributeNotFoundException
-    {
-        Objects.requireNonNull(attribute, "attribute");
-        String name = attribute.getName();
-        // No attributes are writable
-        throw new AttributeNotFoundException("Cannot set attribute " + name + " because it is read-only");
-    }
-
-    @Override
-    public AttributeList getAttributes(String[] attributeNames)
-    {
-        Objects.requireNonNull(attributeNames, "attributeNames[]");
-
-        AttributeList ret = new AttributeList();
-        if (attributeNames.length == 0)
-            return ret;
-
-        for (String name : attributeNames)
-        {
-            try
-            {
-                Object value = getAttribute(name);
-                ret.add(new Attribute(name, value));
-            }
-            catch (Exception e)
-            {
-                // nothing much we can do, this method has no throwables, and we cannot use logging here.
-                e.printStackTrace();
-            }
-        }
-        return ret;
-    }
-
-    @Override
-    public AttributeList setAttributes(AttributeList attributes)
-    {
-        Objects.requireNonNull(attributes, "attributes");
-
-        AttributeList ret = new AttributeList();
-
-        if (attributes.isEmpty())
-            return ret;
-
-        for (Attribute attr : attributes.asList())
-        {
-            try
-            {
-                setAttribute(attr);
-                String name = attr.getName();
-                Object value = getAttribute(name);
-                ret.add(new Attribute(name, value));
-            }
-            catch (Exception e)
-            {
-                // nothing much we can do, this method has no throwables, and we cannot use logging here.
-                e.printStackTrace();
-            }
-        }
-        return ret;
-    }
-
-    @Override
-    public Object invoke(String actionName, Object[] params, String[] signature) throws MBeanException, ReflectionException
-    {
-        Objects.requireNonNull(actionName, "Action Name");
-
-        switch (actionName)
-        {
-            case "setLoggerLevel":
-            {
-                String loggerName = (String)params[0];
-                String level = (String)params[1];
-                return setLoggerLevel(loggerName, level);
-            }
-            case "getLoggerLevel":
-            {
-                String loggerName = (String)params[0];
-                return getLoggerLevel(loggerName);
-            }
-            default:
-                throw new ReflectionException(
-                    new NoSuchMethodException(actionName),
-                    "Cannot find the operation " + actionName + " in " + this.getClass().getName());
-        }
-    }
-
-    @Override
-    public MBeanInfo getMBeanInfo()
-    {
-        if (mBeanInfo == null)
-        {
-            MBeanAttributeInfo[] attrs = new MBeanAttributeInfo[2];
-
-            attrs[0] = new MBeanAttributeInfo(
-                "LoggerCount",
-                "java.lang.Integer",
-                "Count of Registered Loggers by Name.",
-                true,
-                false,
-                false);
-            attrs[1] = new MBeanAttributeInfo(
-                "LoggerNames",
-                "java.lang.String[]",
-                "List of Registered Loggers by Name.",
-                true,
-                false,
-                false);
-
-            MBeanOperationInfo[] operations = new MBeanOperationInfo[]{
-                new MBeanOperationInfo(
-                    "setLoggerLevel",
-                    "Set the logging level at the named logger",
-                    new MBeanParameterInfo[]{
-                        new MBeanParameterInfo("loggerName", "java.lang.String", "The name of the logger"),
-                        new MBeanParameterInfo("level", "java.lang.String", "The name of the level [DEBUG, INFO, WARN, ERROR]")
-                    },
-                    "boolean",
-                    MBeanOperationInfo.ACTION
-                ),
-                new MBeanOperationInfo(
-                    "getLoggerLevel",
-                    "Get the logging level at the named logger",
-                    new MBeanParameterInfo[]{
-                        new MBeanParameterInfo("loggerName", "java.lang.String", "The name of the logger")
-                    },
-                    "java.lang.String",
-                    MBeanOperationInfo.INFO
-                )
-            };
-
-            mBeanInfo = new MBeanInfo(this.getClass().getName(),
-                "Eazy Slf4J Logger Factory",
-                attrs,
-                new MBeanConstructorInfo[0],
-                operations,
-                new MBeanNotificationInfo[0]);
-        }
-        return mBeanInfo;
-    }
+*/
 }

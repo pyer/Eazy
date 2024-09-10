@@ -1,25 +1,15 @@
-//
-// ========================================================================
-// Copyright (c) 1995 Mort Bay Consulting Pty Ltd and others.
-//
-// This program and the accompanying materials are made available under the
-// terms of the Eclipse Public License v. 2.0 which is available at
-// https://www.eclipse.org/legal/epl-2.0, or the Apache License, Version 2.0
-// which is available at https://www.apache.org/licenses/LICENSE-2.0.
-//
-// SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
-// ========================================================================
-//
-
 package ab.eazy.logging;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.FileInputStream;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.TimeZone;
+
+import org.slf4j.event.Level;
 
 /**
  * EazyLogger specific configuration:
@@ -30,18 +20,26 @@ import java.util.TimeZone;
  */
 public class EazyLoggerConfiguration
 {
-    private static final EazyLevel DEFAULT_LEVEL = EazyLevel.INFO;
+    private static final Level DEFAULT_LEVEL = Level.INFO;
     private static final boolean DEFAULT_HIDE_STACKS = false;
     private static final String SUFFIX_LEVEL = ".LEVEL";
     private static final String SUFFIX_STACKS = ".STACKS";
+    private static final String DEFAULT_PROPERTIES_FILE = "logging.properties";
 
     private final Properties properties = new Properties();
 
     /**
      * Default EazyLogger configuration (empty)
+     * or the content of the file logging.properties if it exists
      */
     public EazyLoggerConfiguration()
     {
+        try (InputStream input = new FileInputStream(DEFAULT_PROPERTIES_FILE)) {
+            // load the properties file
+            properties.load(input);
+        } catch (IOException ex) {
+            System.err.printf("[INFO] File '%s' not found.\n", DEFAULT_PROPERTIES_FILE);
+        }
     }
 
     /**
@@ -51,8 +49,16 @@ public class EazyLoggerConfiguration
      */
     public EazyLoggerConfiguration(Properties props)
     {
-        load(props);
+        if (props != null) {
+            for (String name : props.stringPropertyNames()) {
+                String val = props.getProperty(name);
+                // Protect against application code insertion of non-String values (returned as null).
+                if (val != null)
+                    properties.setProperty(name, val);
+            }
+        }
     }
+
 
     public boolean getHideStacks(String name)
     {
@@ -87,9 +93,9 @@ public class EazyLoggerConfiguration
      * <p>Uses the FQCN first, then each package segment from longest to shortest.</p>
      *
      * @param name the name to get log for
-     * @return the logging level int
+     * @return the logging level
      */
-    public EazyLevel getLevel(String name)
+    public Level getLevel(String name)
     {
         if (properties.isEmpty())
             return DEFAULT_LEVEL;
@@ -106,40 +112,29 @@ public class EazyLoggerConfiguration
         if (startName.endsWith(SUFFIX_LEVEL))
             startName = startName.substring(0, startName.length() - SUFFIX_LEVEL.length());
 
-        EazyLevel level = EazyLoggerFactory.walkParentLoggerNames(startName, key ->
+        Level level = EazyLoggerFactory.walkParentLoggerNames(startName, key ->
         {
             String levelStr = properties.getProperty(key + SUFFIX_LEVEL);
-            return toEazyLevel(key, levelStr);
+            return strToLevel(levelStr);
         });
-
-        if (level == null)
-        {
-            // Try slf4j root logging config.
-            String levelStr = properties.getProperty(EazyLogger.ROOT_LOGGER_NAME + SUFFIX_LEVEL);
-            level = toEazyLevel(EazyLogger.ROOT_LOGGER_NAME, levelStr);
-        }
-
-        if (level == null)
-        {
-            // Try legacy root logging config.
-            String levelStr = properties.getProperty("log" + SUFFIX_LEVEL);
-            level = toEazyLevel("log", levelStr);
-        }
 
         return level != null ? level : DEFAULT_LEVEL;
     }
 
-    static EazyLevel toEazyLevel(String loggerName, String levelStr)
+    static Level strToLevel(String levelStr)
     {
-        if (levelStr == null)
-            return null;
-        EazyLevel level = EazyLevel.strToLevel(levelStr);
-        if (level == null)
-        {
-            System.err.printf("Unknown EazyLogger/SLF4J Level [%s]=[%s], expecting only %s as values.%n",
-                loggerName, levelStr, Arrays.toString(EazyLevel.values()));
+        if (levelStr == null) {
+            return DEFAULT_LEVEL;
         }
-        return level;
+
+        for (Level level : Level.values()) {
+            if (level.name().equals(levelStr))
+                return level;
+        }
+
+        System.err.printf("Unknown Logger/SLF4J Level [%s], expecting only %s as values.\n",
+                levelStr, Arrays.toString(Level.values()));
+        return DEFAULT_LEVEL;
     }
 
     public TimeZone getTimeZone(String key)
@@ -150,36 +145,6 @@ public class EazyLoggerConfiguration
         return TimeZone.getTimeZone(zoneIdStr);
     }
 
-    /**
-     * Load the Configuration from the ClassLoader
-     *
-     * @param loader the classloader to use when finding the {@code eazy-logging.properties} resources in.
-     * Passing {@code null} means the {@link ClassLoader#getSystemClassLoader()} is used.
-     * @return the configuration
-     */
-    public EazyLoggerConfiguration load(ClassLoader loader)
-    {
-        // First see if the eazy-logging.properties object exists in the classpath.
-        // * This is an optional feature used by embedded mode use, and test cases to allow for early
-        // * configuration of the Log class in situations where access to the System.properties are
-        // * either too late or just impossible.
-        load(readProperties(loader, "eazy-logging.properties"));
-
-        // Next see if an OS specific eazy-logging.properties object exists in the classpath.
-        // This really for setting up test specific logging behavior based on OS.
-        String osName = System.getProperty("os.name");
-        if (osName != null && osName.length() > 0)
-        {
-            // NOTE: cannot use eazy-util's StringUtil.replace() as it may initialize logging itself.
-            osName = osName.toLowerCase(Locale.ENGLISH).replace(' ', '-');
-            load(readProperties(loader, "eazy-logging-" + osName + ".properties"));
-        }
-
-        // Now load the System.properties as-is into the properties,
-        // these values will override any key conflicts in properties.
-        load(System.getProperties());
-        return this;
-    }
 
     public String getString(String key, String defValue)
     {
@@ -207,55 +172,4 @@ public class EazyLoggerConfiguration
         }
     }
 
-    private URL getResource(ClassLoader loader, String resourceName)
-    {
-        if (loader == null)
-            return ClassLoader.getSystemResource(resourceName);
-        else
-            return loader.getResource(resourceName);
-    }
-
-    /**
-     * Overlay existing properties with provided properties.
-     *
-     * @param props the properties to load
-     */
-    private void load(Properties props)
-    {
-        if (props == null)
-            return;
-
-        for (String name : props.stringPropertyNames())
-        {
-            if (name.startsWith("ab.eazy.logging.") ||
-                name.endsWith(".LEVEL") ||
-                name.endsWith(".STACKS"))
-            {
-                String val = props.getProperty(name);
-                // Protect against application code insertion of non-String values (returned as null).
-                if (val != null)
-                    properties.setProperty(name, val);
-            }
-        }
-    }
-
-    private Properties readProperties(ClassLoader loader, String resourceName)
-    {
-        URL propsUrl = getResource(loader, resourceName);
-        if (propsUrl == null)
-            return null;
-
-        try (InputStream in = propsUrl.openStream())
-        {
-            Properties p = new Properties();
-            p.load(in);
-            return p;
-        }
-        catch (IOException e)
-        {
-            System.err.println("[WARN] Error loading logging config: " + propsUrl);
-            e.printStackTrace();
-        }
-        return null;
-    }
 }

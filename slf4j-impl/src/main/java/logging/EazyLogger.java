@@ -9,7 +9,8 @@
 //
 // SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 // ========================================================================
-//
+// Example: private static final Logger LOG = LoggerFactory.getLogger(Server.class);
+
 
 package ab.eazy.logging;
 
@@ -18,29 +19,28 @@ import org.slf4j.Marker;
 import org.slf4j.event.Level;
 import org.slf4j.event.LoggingEvent;
 import org.slf4j.helpers.SubstituteLogger;
-import org.slf4j.spi.LocationAwareLogger;
 
-public class EazyLogger implements LocationAwareLogger, Logger
+public class EazyLogger implements Logger
 {
     private final EazyLoggerFactory factory;
     private final String name;
     private final String condensedName;
     private final EazyAppender appender;
-    private EazyLevel level;
+    private int levelInt;
     private boolean hideStacks;
 
     public EazyLogger(EazyLoggerFactory factory, String name, EazyAppender appender)
     {
-        this(factory, name, appender, EazyLevel.INFO, false);
+        this(factory, name, appender, Level.INFO, false);
     }
 
-    public EazyLogger(EazyLoggerFactory factory, String name, EazyAppender appender, EazyLevel level, boolean hideStacks)
+    public EazyLogger(EazyLoggerFactory factory, String name, EazyAppender appender, Level level, boolean hideStacks)
     {
         this.factory = factory;
         this.name = name;
         this.condensedName = condensePackageString(name);
         this.appender = appender;
-        this.level = level;
+        this.levelInt = level.toInt();
         this.hideStacks = hideStacks;
     }
 
@@ -104,6 +104,18 @@ public class EazyLogger implements LocationAwareLogger, Logger
         return dense.toString();
     }
 
+    /**
+     * Tests that a provided level is included by the level value of this level.
+     *
+     * @param testLevel the level to test against.
+     * @return true if includes this includes the test level.
+     */
+    private boolean levelIncludes(Level testLevel)
+    {
+        return (this.levelInt <= testLevel.toInt());
+    }
+
+
     public EazyAppender getAppender()
     {
         return appender;
@@ -114,36 +126,11 @@ public class EazyLogger implements LocationAwareLogger, Logger
         return condensedName;
     }
 
-    public EazyLevel getLevel()
-    {
-        return level;
-    }
-
-    public void setLevel(EazyLevel level)
-    {
-        this.level = level;
-
-        // apply setLevel to children too.
-        factory.walkChildrenLoggers(this.getName(), (logger) -> logger.setLevel(level));
-    }
 
     @Override
     public String getName()
     {
         return name;
-    }
-
-    public boolean isHideStacks()
-    {
-        return hideStacks;
-    }
-
-    public void setHideStacks(boolean hideStacks)
-    {
-        this.hideStacks = hideStacks;
-
-        // apply setHideStacks to children too.
-        factory.walkChildrenLoggers(this.getName(), (logger) -> logger.setHideStacks(hideStacks));
     }
 
     @Override
@@ -229,7 +216,7 @@ public class EazyLogger implements LocationAwareLogger, Logger
     @Override
     public boolean isDebugEnabled()
     {
-        return level.includes(EazyLevel.DEBUG);
+        return levelIncludes(Level.DEBUG);
     }
 
     @Override
@@ -321,7 +308,7 @@ public class EazyLogger implements LocationAwareLogger, Logger
     @Override
     public boolean isErrorEnabled()
     {
-        return level.includes(EazyLevel.ERROR);
+        return levelIncludes(Level.ERROR);
     }
 
     @Override
@@ -413,7 +400,7 @@ public class EazyLogger implements LocationAwareLogger, Logger
     @Override
     public boolean isInfoEnabled()
     {
-        return level.includes(EazyLevel.INFO);
+        return levelIncludes(Level.INFO);
     }
 
     @Override
@@ -505,7 +492,7 @@ public class EazyLogger implements LocationAwareLogger, Logger
     @Override
     public boolean isTraceEnabled()
     {
-        return level.includes(EazyLevel.TRACE);
+        return levelIncludes(Level.TRACE);
     }
 
     @Override
@@ -597,7 +584,7 @@ public class EazyLogger implements LocationAwareLogger, Logger
     @Override
     public boolean isWarnEnabled()
     {
-        return level.includes(EazyLevel.WARN);
+        return levelIncludes(Level.WARN);
     }
 
     @Override
@@ -647,36 +634,24 @@ public class EazyLogger implements LocationAwareLogger, Logger
         getAppender().emit(this, level, timestamp, threadName, throwable, msg);
     }
 
-    /**
+    /*
      * Entry point for {@link LocationAwareLogger}
-     */
     @Override
     public void log(Marker marker, String fqcn, int levelInt, String message, Object[] argArray, Throwable throwable)
     {
-        if (this.level.toInt() <= levelInt)
+        if (this.levelInt <= levelInt)
         {
             long timestamp = System.currentTimeMillis();
             String threadName = Thread.currentThread().getName();
-            getAppender().emit(this, EazyLevel.intToLevel(levelInt).toLevel(), timestamp, threadName, throwable, message, argArray);
+            getAppender().emit(this, Level.intToLevel(levelInt).toLevel(), timestamp, threadName, throwable, message, argArray);
         }
     }
 
-    /**
-     * Dynamic (via Reflection) entry point for {@link SubstituteLogger} usage.
-     *
-     * @param event the logging event
-     */
-    @SuppressWarnings("unused")
-    public void log(LoggingEvent event)
-    {
-        // TODO: do we want to support org.sfl4j.Marker?
-        // TODO: do we want to support org.sfl4j.even.KeyValuePair?
-        getAppender().emit(this, event.getLevel(), event.getTimeStamp(), event.getThreadName(), event.getThrowable(), event.getMessage(), event.getArgumentArray());
-    }
 
     @Override
     public String toString()
     {
         return String.format("%s:%s:LEVEL=%s", EazyLogger.class.getSimpleName(), name, level.name());
     }
+     */
 }

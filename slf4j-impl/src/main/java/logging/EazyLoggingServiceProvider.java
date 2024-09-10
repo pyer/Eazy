@@ -34,7 +34,8 @@ public class EazyLoggingServiceProvider implements SLF4JServiceProvider
     @Override
     public void initialize()
     {
-        EazyLoggerConfiguration config = new EazyLoggerConfiguration().load(this.getClass().getClassLoader());
+        //EazyLoggerConfiguration config = new EazyLoggerConfiguration().load(this.getClass().getClassLoader());
+        EazyLoggerConfiguration config = new EazyLoggerConfiguration();
         loggerFactory = new EazyLoggerFactory(config);
         markerFactory = new BasicMarkerFactory();
         mdcAdapter = new NOPMDCAdapter(); // TODO: Provide Eazy Implementation?
