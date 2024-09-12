@@ -19,6 +19,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import org.slf4j.helpers.FormattingTuple;
 import org.slf4j.helpers.MessageFormatter;
@@ -87,7 +88,7 @@ public class EazyAppender
         this.messageAlignColumn = config.getInt(MESSAGE_ALIGN_KEY, 0);
     }
 
-    public void emit(EazyLogger logger, Level level, long timestamp, String threadName, Throwable throwable, String message, Object... argumentArray)
+    public void emit(Logger logger, Level level, long timestamp, String threadName, Throwable throwable, String message, Object... argumentArray)
     {
         StringBuilder builder = new StringBuilder(64);
         format(builder, logger, level, timestamp, threadName, throwable, message, argumentArray);
@@ -126,7 +127,7 @@ public class EazyAppender
         this.stream = stream;
     }
 
-    private void format(StringBuilder builder, EazyLogger logger, Level level, long timestamp, String threadName, Throwable throwable, String message, Object... argumentArray)
+    private void format(StringBuilder builder, Logger logger, Level level, long timestamp, String threadName, Throwable throwable, String message, Object... argumentArray)
     {
         Throwable cause = throwable;
 
@@ -140,7 +141,7 @@ public class EazyAppender
         builder.append(':');
         if (condensedNames)
         {
-            builder.append(logger.getCondensedName());
+            builder.append(condensePackageString(logger.getName()));
         }
         else
         {
@@ -169,6 +170,66 @@ public class EazyAppender
         if (cause != null) {
             appendCause(builder, cause, "", Collections.newSetFromMap(new IdentityHashMap<>()));
         }
+    }
+
+    /**
+     * Condenses a classname by stripping down the package name to just the first character of each package name
+     * segment.Configured
+     *
+     * <pre>
+     * Examples:
+     * "ab.eazy.test.FooTest"           = "oejt.FooTest"
+     * "ab.eazy.server.logging.LogTest" = "orjsl.LogTest"
+     * </pre>
+     *
+     * @param classname the fully qualified class name
+     * @return the condensed name
+     */
+    private static String condensePackageString(String classname)
+    {
+        if (classname == null || classname.isEmpty())
+            return "";
+
+        int rawLen = classname.length();
+        StringBuilder dense = new StringBuilder(rawLen);
+        boolean foundStart = false;
+        boolean hasPackage = false;
+        int startIdx = -1;
+        int endIdx = -1;
+        for (int i = 0; i < rawLen; i++)
+        {
+            char c = classname.charAt(i);
+            if (!foundStart)
+            {
+                foundStart = Character.isJavaIdentifierStart(c);
+                if (foundStart)
+                {
+                    if (startIdx >= 0)
+                    {
+                        dense.append(classname.charAt(startIdx));
+                        hasPackage = true;
+                    }
+                    startIdx = i;
+                }
+            }
+
+            if (foundStart)
+            {
+                if (Character.isJavaIdentifierPart(c))
+                    endIdx = i;
+                else
+                    foundStart = false;
+            }
+        }
+        // append remaining from startIdx
+        if ((startIdx >= 0) && (endIdx >= startIdx))
+        {
+            if (hasPackage)
+                dense.append('.');
+            dense.append(classname, startIdx, endIdx + 1);
+        }
+
+        return dense.toString();
     }
 
     private String renderedLevel(Level level)

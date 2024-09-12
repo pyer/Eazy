@@ -24,7 +24,6 @@ public class EazyLogger implements Logger
 {
     private final EazyLoggerFactory factory;
     private final String name;
-    private final String condensedName;
     private final EazyAppender appender;
     private int levelInt;
     private boolean hideStacks;
@@ -38,70 +37,9 @@ public class EazyLogger implements Logger
     {
         this.factory = factory;
         this.name = name;
-        this.condensedName = condensePackageString(name);
         this.appender = appender;
         this.levelInt = level.toInt();
         this.hideStacks = hideStacks;
-    }
-
-    /**
-     * Condenses a classname by stripping down the package name to just the first character of each package name
-     * segment.Configured
-     *
-     * <pre>
-     * Examples:
-     * "ab.eazy.test.FooTest"           = "oejt.FooTest"
-     * "ab.eazy.server.logging.LogTest" = "orjsl.LogTest"
-     * </pre>
-     *
-     * @param classname the fully qualified class name
-     * @return the condensed name
-     */
-    private static String condensePackageString(String classname)
-    {
-        if (classname == null || classname.isEmpty())
-            return "";
-
-        int rawLen = classname.length();
-        StringBuilder dense = new StringBuilder(rawLen);
-        boolean foundStart = false;
-        boolean hasPackage = false;
-        int startIdx = -1;
-        int endIdx = -1;
-        for (int i = 0; i < rawLen; i++)
-        {
-            char c = classname.charAt(i);
-            if (!foundStart)
-            {
-                foundStart = Character.isJavaIdentifierStart(c);
-                if (foundStart)
-                {
-                    if (startIdx >= 0)
-                    {
-                        dense.append(classname.charAt(startIdx));
-                        hasPackage = true;
-                    }
-                    startIdx = i;
-                }
-            }
-
-            if (foundStart)
-            {
-                if (Character.isJavaIdentifierPart(c))
-                    endIdx = i;
-                else
-                    foundStart = false;
-            }
-        }
-        // append remaining from startIdx
-        if ((startIdx >= 0) && (endIdx >= startIdx))
-        {
-            if (hasPackage)
-                dense.append('.');
-            dense.append(classname, startIdx, endIdx + 1);
-        }
-
-        return dense.toString();
     }
 
     /**
@@ -115,17 +53,16 @@ public class EazyLogger implements Logger
         return (this.levelInt <= testLevel.toInt());
     }
 
+    public void setLevel(Level level)
+    {
+        this.levelInt = level.toInt();
+    }
+
 
     public EazyAppender getAppender()
     {
         return appender;
     }
-
-    String getCondensedName()
-    {
-        return condensedName;
-    }
-
 
     @Override
     public String getName()

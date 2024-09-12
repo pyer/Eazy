@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.FileInputStream;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Locale;
+//import java.util.Arrays;
 import java.util.Properties;
 import java.util.TimeZone;
 
@@ -20,11 +19,11 @@ import org.slf4j.event.Level;
  */
 public class EazyLoggerConfiguration
 {
-    private static final Level DEFAULT_LEVEL = Level.INFO;
-    private static final boolean DEFAULT_HIDE_STACKS = false;
-    private static final String SUFFIX_LEVEL = ".LEVEL";
-    private static final String SUFFIX_STACKS = ".STACKS";
     private static final String DEFAULT_PROPERTIES_FILE = "logging.properties";
+    private static final Level DEFAULT_LEVEL = Level.INFO;
+    private static final String SUFFIX_LEVEL = ".LEVEL";
+    private static final Boolean DEFAULT_HIDE_STACKS = false;
+    private static final String SUFFIX_STACKS = ".STACKS";
 
     private final Properties properties = new Properties();
 
@@ -34,11 +33,12 @@ public class EazyLoggerConfiguration
      */
     public EazyLoggerConfiguration()
     {
-        try (InputStream input = new FileInputStream(DEFAULT_PROPERTIES_FILE)) {
+        try {
             // load the properties file
+            InputStream input = new FileInputStream(DEFAULT_PROPERTIES_FILE);
             properties.load(input);
         } catch (IOException ex) {
-            System.err.printf("[INFO] File '%s' not found.\n", DEFAULT_PROPERTIES_FILE);
+            //System.err.printf("WARNING: File '%s' not found.\n", DEFAULT_PROPERTIES_FILE);
         }
     }
 
@@ -59,33 +59,50 @@ public class EazyLoggerConfiguration
         }
     }
 
-
+    /**
+     * <p>Returns the HideStacks status for the provided log name.</p>
+     * <p>Uses the FQCN first, then each package segment from longest to shortest.</p>
+     *
+     * @param name the name to get log for
+     * @return the status
+     */
     public boolean getHideStacks(String name)
     {
         if (properties.isEmpty())
             return DEFAULT_HIDE_STACKS;
 
-        String startName = name;
-
+        String startName = name != null ? name : "";
         // strip trailing dot
-        while (startName.endsWith("."))
-        {
+        while (startName.endsWith(".")) {
             startName = startName.substring(0, startName.length() - 1);
         }
 
         // strip ".STACKS" suffix (if present)
-        if (startName.endsWith(SUFFIX_STACKS))
+        if (startName.endsWith(SUFFIX_STACKS)) {
             startName = startName.substring(0, startName.length() - SUFFIX_STACKS.length());
+        }
 
-        Boolean hideStacks = EazyLoggerFactory.walkParentLoggerNames(startName, key ->
-        {
-            String stacksBool = properties.getProperty(key + SUFFIX_STACKS);
-            if (stacksBool != null)
-                return Boolean.parseBoolean(stacksBool);
-            return null;
-        });
+        return findHideStacksThroughLoggerNames(startName);
+    }
 
-        return hideStacks != null ? hideStacks : DEFAULT_HIDE_STACKS;
+    private Boolean findHideStacksThroughLoggerNames(String loggerName)
+    {
+        // Checking with FQCN first, then each package segment from longest to shortest.
+        String nameSegment = loggerName;
+        while (nameSegment.length() > 0) {
+            String statusStr = properties.getProperty(nameSegment + SUFFIX_STACKS);
+            if (statusStr != null) {
+                return Boolean.parseBoolean(statusStr);
+            }
+            // Trim and try again.
+            int idx = nameSegment.lastIndexOf('.');
+            if (idx >= 0)
+                nameSegment = nameSegment.substring(0, idx);
+            else
+                break;
+        }
+
+        return DEFAULT_HIDE_STACKS;
     }
 
     /**
@@ -101,41 +118,51 @@ public class EazyLoggerConfiguration
             return DEFAULT_LEVEL;
 
         String startName = name != null ? name : "";
-
         // Strip trailing dot.
-        while (startName.endsWith("."))
-        {
+        while (startName.endsWith(".")) {
             startName = startName.substring(0, startName.length() - 1);
         }
 
         // Strip ".LEVEL" suffix (if present).
-        if (startName.endsWith(SUFFIX_LEVEL))
+        if (startName.endsWith(SUFFIX_LEVEL)) {
             startName = startName.substring(0, startName.length() - SUFFIX_LEVEL.length());
+        }
 
-        Level level = EazyLoggerFactory.walkParentLoggerNames(startName, key ->
-        {
-            String levelStr = properties.getProperty(key + SUFFIX_LEVEL);
-            return strToLevel(levelStr);
-        });
-
-        return level != null ? level : DEFAULT_LEVEL;
+        return findLevelThroughLoggerNames(startName);
     }
 
-    static Level strToLevel(String levelStr)
+    private Level findLevelThroughLoggerNames(String loggerName)
     {
-        if (levelStr == null) {
-            return DEFAULT_LEVEL;
+        // Checking with FQCN first, then each package segment from longest to shortest.
+        String nameSegment = loggerName;
+        while (nameSegment.length() > 0) {
+            String levelStr = properties.getProperty(nameSegment + SUFFIX_LEVEL);
+            if (levelStr != null) {
+                for (Level level : Level.values()) {
+                    if (level.name().equals(levelStr))
+                        return level;
+                }
+//                System.err.printf("Unknown Logger/SLF4J Level [%s], expecting only %s as values.\n",
+//                    levelStr, Arrays.toString(Level.values()));
+            }
+            // Trim and try again.
+            int idx = nameSegment.lastIndexOf('.');
+            if (idx >= 0)
+                nameSegment = nameSegment.substring(0, idx);
+            else
+                break;
         }
 
-        for (Level level : Level.values()) {
-            if (level.name().equals(levelStr))
-                return level;
-        }
-
-        System.err.printf("Unknown Logger/SLF4J Level [%s], expecting only %s as values.\n",
-                levelStr, Arrays.toString(Level.values()));
         return DEFAULT_LEVEL;
     }
+/*
+  private static final Set<String> VALUES = Set.of(
+    "AB","BC","CD","AE"
+);
+"Given String s, is there a good way of testing whether VALUES contains s?"
+
+VALUES.contains(s)
+*/
 
     public TimeZone getTimeZone(String key)
     {
@@ -145,11 +172,6 @@ public class EazyLoggerConfiguration
         return TimeZone.getTimeZone(zoneIdStr);
     }
 
-
-    public String getString(String key, String defValue)
-    {
-        return properties.getProperty(key, defValue);
-    }
 
     public boolean getBoolean(String key, boolean defValue)
     {
@@ -170,6 +192,11 @@ public class EazyLoggerConfiguration
         {
             return defValue;
         }
+    }
+
+    public String getString(String key, String defValue)
+    {
+        return properties.getProperty(key, defValue);
     }
 
 }
