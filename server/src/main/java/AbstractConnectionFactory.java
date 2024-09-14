@@ -18,7 +18,6 @@ import java.util.List;
 
 import ab.eazy.io.AbstractConnection;
 import ab.eazy.io.EndPoint;
-import ab.eazy.util.ArrayUtil;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.component.ContainerLifeCycle;

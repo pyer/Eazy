@@ -127,12 +127,7 @@ class ResourceFactoryInternals
         return RESOURCE_FACTORIES.getBest(str) != null;
     }
 
-    interface Tracking
-    {
-        int getTrackingCount();
-    }
-
-    static class Closeable implements ResourceFactory.Closeable, Tracking
+    static class Closeable implements ResourceFactory.Closeable
     {
         private boolean closed = false;
         private final CompositeResourceFactory _compositeResourceFactory = new CompositeResourceFactory();
