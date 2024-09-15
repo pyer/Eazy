@@ -19,7 +19,6 @@ import ab.eazy.util.StringUtil;
 
 import static ab.eazy.http.CookieCompliance.Violation.ATTRIBUTES;
 import static ab.eazy.http.CookieCompliance.Violation.ATTRIBUTE_VALUES;
-import static ab.eazy.http.CookieCompliance.Violation.COMMA_NOT_VALID_OCTET;
 import static ab.eazy.http.CookieCompliance.Violation.COMMA_SEPARATOR;
 import static ab.eazy.http.CookieCompliance.Violation.ESCAPE_IN_QUOTES;
 import static ab.eazy.http.CookieCompliance.Violation.INVALID_COOKIES;
@@ -290,11 +289,6 @@ public class RFC6265CookieParser implements CookieParser
                     else if (_complianceMode.allows(SPECIAL_CHARS_IN_QUOTES))
                     {
                         reportComplianceViolation(SPECIAL_CHARS_IN_QUOTES, field);
-                        string.append(c);
-                    }
-                    else if (c == ',' && _complianceMode.allows(COMMA_NOT_VALID_OCTET))
-                    {
-                        reportComplianceViolation(COMMA_NOT_VALID_OCTET, field);
                         string.append(c);
                     }
                     else if (c == ' ' && _complianceMode.allows(SPACE_IN_VALUES))

@@ -351,63 +351,6 @@ public class ServletPathSpec extends AbstractPathSpec
         return _pathDepth;
     }
 
-    /**
-     * @deprecated use {@link #matched(String)}#{@link MatchedPath#getPathInfo()} instead.
-     */
-    @Deprecated
-    @Override
-    public String getPathInfo(String path)
-    {
-        switch (_group)
-        {
-            case ROOT:
-                return path;
-
-            case PREFIX_GLOB:
-                if (path.length() == _matchLength)
-                    return null;
-                return path.substring(_matchLength);
-
-            default:
-                return null;
-        }
-    }
-
-    /**
-     * @deprecated use {@link #matched(String)}#{@link MatchedPath#getPathMatch()} instead.
-     */
-    @Deprecated
-    @Override
-    public String getPathMatch(String path)
-    {
-        switch (_group)
-        {
-            case ROOT:
-                return "";
-
-            case EXACT:
-                if (_declaration.equals(path))
-                    return path;
-                return null;
-
-            case PREFIX_GLOB:
-                if (isWildcardMatch(path))
-                    return path.substring(0, _matchLength);
-                return null;
-
-            case SUFFIX_GLOB:
-                if (path.regionMatches(path.length() - (_specLength - 1), _declaration, 1, _specLength - 1))
-                    return path;
-                return null;
-
-            case DEFAULT:
-                return path;
-
-            default:
-                return null;
-        }
-    }
-
     @Override
     public String getDeclaration()
     {

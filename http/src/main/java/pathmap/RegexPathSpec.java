@@ -268,24 +268,6 @@ public class RegexPathSpec extends AbstractPathSpec
     }
 
     @Override
-    public String getPathInfo(String path)
-    {
-        MatchedPath matched = matched(path);
-        if (matched == null)
-            return null;
-        return matched.getPathInfo();
-    }
-
-    @Override
-    public String getPathMatch(String path)
-    {
-        MatchedPath matched = matched(path);
-        if (matched == null)
-            return "";
-        return matched.getPathMatch();
-    }
-
-    @Override
     public String getDeclaration()
     {
         return _declaration;

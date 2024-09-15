@@ -56,26 +56,6 @@ public interface PathSpec extends Comparable<PathSpec>
     int getPathDepth();
 
     /**
-     * Return the portion of the path that is after the path spec.
-     *
-     * @param path the path to match against
-     * @return the path info portion of the string
-     * @deprecated use {@link #matched(String)} instead
-     */
-    @Deprecated
-    String getPathInfo(String path);
-
-    /**
-     * Return the portion of the path that matches a path spec.
-     *
-     * @param path the path to match against
-     * @return the match, or null if no match at all
-     * @deprecated use {@link #matched(String)} instead
-     */
-    @Deprecated
-    String getPathMatch(String path);
-
-    /**
      * The as-provided path spec.
      *
      * @return the as-provided path spec

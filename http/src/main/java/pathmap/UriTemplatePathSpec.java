@@ -344,49 +344,6 @@ public class UriTemplatePathSpec extends AbstractPathSpec
     }
 
     @Override
-    public String getPathInfo(String path)
-    {
-        // Path Info only valid for PREFIX_GLOB types
-        if (_group == PathSpecGroup.PREFIX_GLOB)
-        {
-            Matcher matcher = getMatcher(path);
-            if (matcher.matches())
-            {
-                if (matcher.groupCount() >= 1)
-                {
-                    String pathInfo = matcher.group(1);
-                    if ("".equals(pathInfo))
-                        return "/";
-                    else
-                        return pathInfo;
-                }
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public String getPathMatch(String path)
-    {
-        Matcher matcher = getMatcher(path);
-        if (matcher.matches())
-        {
-            if (_group == PathSpecGroup.PREFIX_GLOB && matcher.groupCount() >= 1)
-            {
-                int idx = matcher.start(1);
-                if (idx > 0)
-                {
-                    if (path.charAt(idx - 1) == '/')
-                        idx--;
-                    return path.substring(0, idx);
-                }
-            }
-            return path;
-        }
-        return null;
-    }
-
-    @Override
     public String getDeclaration()
     {
         return _declaration;

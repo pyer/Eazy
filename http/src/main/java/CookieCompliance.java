@@ -40,23 +40,9 @@ public class CookieCompliance implements ComplianceViolation.Mode
     public enum Violation implements ComplianceViolation
     {
         /**
-         * A comma was found in a cookie value.
-         *
-         * @deprecated Use SPECIAL_CHARS_IN_QUOTES
-         */
-        @Deprecated
-        COMMA_NOT_VALID_OCTET("https://tools.ietf.org/html/rfc6265#section-4.2.1", "Comma not valid as cookie-octet or separator"),
-
-        /**
          * A comma was found as separator between cookies.
          */
         COMMA_SEPARATOR("https://www.rfc-editor.org/rfc/rfc2965.html", "Comma cookie separator"),
-
-        /**
-         * @deprecated no replacement because was mistakenly considered a violation
-         */
-        @Deprecated
-        RESERVED_NAMES_NOT_DOLLAR_PREFIXED("https://tools.ietf.org/html/rfc6265#section-4.2.1", "Reserved name no longer use '$' prefix"),
 
         /**
          * Special characters were found in a quoted cookie value.
@@ -174,13 +160,9 @@ public class CookieCompliance implements ComplianceViolation.Mode
      * but does <b>not</b> allow:
      * <ul>
      * <li>{@link Violation#BAD_QUOTES}</li>
-     * <li>{@link Violation#COMMA_NOT_VALID_OCTET}</li>
-     * <li>{@link Violation#RESERVED_NAMES_NOT_DOLLAR_PREFIXED}</li>
      * </ul>
      */
-    public static final CookieCompliance RFC2965 = new CookieCompliance("RFC2965", complementOf(of(
-        Violation.BAD_QUOTES, Violation.COMMA_NOT_VALID_OCTET, Violation.RESERVED_NAMES_NOT_DOLLAR_PREFIXED)
-    ));
+    public static final CookieCompliance RFC2965 = new CookieCompliance("RFC2965", complementOf(of( Violation.BAD_QUOTES)));
 
     private static final List<CookieCompliance> KNOWN_MODES = Arrays.asList(RFC6265, RFC6265_STRICT, RFC6265_LEGACY, RFC2965, RFC2965_LEGACY);
     private static final AtomicInteger __custom = new AtomicInteger();
@@ -207,14 +189,6 @@ public class CookieCompliance implements ComplianceViolation.Mode
      * <dt>&lt;name&gt;</dt><dd>The name of a static instance of CookieCompliance (e.g. {@link CookieCompliance#RFC6265}).
      * </dl>
      * <p>
-     * The remainder of the list can contain then names of {@link CookieCompliance.Violation}s to include them in the mode, or prefixed
-     * with a '-' to exclude them from the mode.  Examples are:
-     * </p>
-     * <dl>
-     * <dt>{@code 0,RESERVED_NAMES_NOT_DOLLAR_PREFIXED}</dt><dd>Only allow {@link CookieCompliance.Violation#RESERVED_NAMES_NOT_DOLLAR_PREFIXED}</dd>
-     * <dt>{@code *,-RESERVED_NAMES_NOT_DOLLAR_PREFIXED}</dt><dd>Allow all violations, except {@link CookieCompliance.Violation#RESERVED_NAMES_NOT_DOLLAR_PREFIXED}</dd>
-     * <dt>{@code RFC2965,RESERVED_NAMES_NOT_DOLLAR_PREFIXED}</dt><dd>Same as RFC2965, but allows {@link CookieCompliance.Violation#RESERVED_NAMES_NOT_DOLLAR_PREFIXED}</dd>
-     * </dl>
      *
      * @param spec A string describing the compliance
      * @return the compliance from the string spec

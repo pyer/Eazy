@@ -15,7 +15,6 @@ package ab.eazy.http;
 
 import java.util.List;
 
-import static ab.eazy.http.CookieCompliance.Violation.BAD_QUOTES;
 import static ab.eazy.http.CookieCompliance.Violation.Listener;
 
 /**
@@ -35,11 +34,7 @@ public interface CookieParser
     static CookieParser newParser(Handler handler, CookieCompliance compliance, Listener complianceListener)
     {
         // The RFC6265CookieParser is primarily a RFC6265 parser, but it can handle most
-        // defined "violations" so that it effectively becomes a RFC2965 parser. However, it
-        // cannot forgive bad quotes.  Thus, we use the legacy CookieCutter parser only if
-        // the compliance mode requires BAD QUOTES.
-        if (compliance.allows(BAD_QUOTES))
-            return new CookieCutter(handler, compliance, complianceListener);
+        // defined "violations" so that it effectively becomes a RFC2965 parser.
         return new RFC6265CookieParser(handler, compliance, complianceListener);
     }
 
