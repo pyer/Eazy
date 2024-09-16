@@ -78,7 +78,6 @@ public class Server extends Handler.Abstract implements Attributes
 
     private final Context _serverContext = new ServerContext();
     private final AutoLock _dateLock = new AutoLock();
-    private boolean _stopAtShutdown;
     private Request.Handler _errorHandler = new ErrorHandler();
     private RequestLog _requestLog;
     private volatile DateField _dateField;
@@ -222,38 +221,6 @@ public class Server extends Handler.Abstract implements Attributes
         return _stopTimeout;
     }
 
-    public boolean getStopAtShutdown()
-    {
-        return _stopAtShutdown;
-    }
-
-    /**
-     * Set stop server at shutdown behaviour.
-     *
-     * @param stop If true, this server instance will be explicitly stopped when the
-     * JVM is shutdown. Otherwise the JVM is stopped with the server running.
-     * @see Runtime#addShutdownHook(Thread)
-     * @see ShutdownThread
-     */
-    public void setStopAtShutdown(boolean stop)
-    {
-        //if we now want to stop
-        if (stop)
-        {
-            //and we weren't stopping before
-            if (!_stopAtShutdown)
-            {
-                //only register to stop if we're already started (otherwise we'll do it in doStart())
-                if (isStarted())
-                    ShutdownThread.register(this);
-            }
-        }
-        else
-            ShutdownThread.deregister(this);
-
-        _stopAtShutdown = stop;
-    }
-
     /*
      * Hhandlers
      */
@@ -325,10 +292,9 @@ public class Server extends Handler.Abstract implements Attributes
     {
         try
         {
-            //If the Server should be stopped when the jvm exits, register
+            //The Server should be stopped when the jvm exits, register
             //with the shutdown handler thread.
-            if (getStopAtShutdown())
-                ShutdownThread.register(this);
+            ShutdownThread.register(this);
 
             //Register the Server with the handler thread for receiving
             //remote stop commands
