@@ -31,7 +31,6 @@ import ab.eazy.http.MultiPartCompliance;
 import ab.eazy.http.UriCompliance;
 import ab.eazy.util.HostPort;
 import ab.eazy.util.Index;
-import ab.eazy.util.Jetty;
 import ab.eazy.util.URIUtil;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
@@ -51,7 +50,8 @@ import ab.eazy.util.component.DumpableCollection;
 @ManagedObject("HTTP Configuration")
 public class HttpConfiguration implements Dumpable
 {
-    public static final String SERVER_VERSION = "Jetty(" + Jetty.VERSION + ")";
+    public static final String SERVER_VERSION = "Eazy 1.0.0";
+    public static final String POWERED_BY = "Powered by Eazy 1.0.0";
     private final List<Customizer> _customizers = new CopyOnWriteArrayList<>();
     private final Index.Mutable<Boolean> _formEncodedMethods = new Index.Builder<Boolean>()
         .caseSensitive(false)
@@ -299,7 +299,7 @@ public class HttpConfiguration implements Dumpable
         {
             if (preamble != null)
                 out.append(preamble);
-            out.append(Jetty.POWERED_BY);
+            out.append(POWERED_BY);
             if (postamble != null)
                 out.append(postamble);
         }

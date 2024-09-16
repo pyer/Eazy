@@ -90,6 +90,9 @@ public class ErrorHandler implements Request.Handler
     @Override
     public boolean handle(Request request, Response response, Callback callback) throws Exception
     {
+        String uri = request.getHttpURI().getPath();
+        LOG.info(uri);
+
         if (LOG.isDebugEnabled())
             LOG.debug("handle({}, {}, {})", request, response, callback);
         if (_cacheControl != null)

@@ -717,6 +717,9 @@ public class ContextHandler extends Handler.Abstract implements Attributes, Alia
     @Override
     public boolean handle(Request request, Response response, Callback callback) throws Exception
     {
+        String uri = request.getHttpURI().getPath();
+        LOG.info(uri);
+
         Handler handler = getHandler();
         if (handler == null || !isStarted())
             return false;

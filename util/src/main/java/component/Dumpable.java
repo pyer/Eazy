@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import ab.eazy.util.Jetty;
 import ab.eazy.util.StringUtil;
 import ab.eazy.util.TypeUtil;
 import ab.eazy.util.annotation.ManagedObject;
@@ -81,6 +80,7 @@ public interface Dumpable
         {
             dumpable.dump(out, "");
 
+/*
             out.append(KEY);
             Runtime runtime = Runtime.getRuntime();
             Instant now = Instant.now();
@@ -100,6 +100,7 @@ public interface Dumpable
                 DateTimeFormatter.ISO_DATE_TIME.format(now.atOffset(ZoneOffset.UTC)),
                 zone,
                 DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(now.atZone(ZoneId.of(zone)))));
+*/
         }
         catch (IOException e)
         {

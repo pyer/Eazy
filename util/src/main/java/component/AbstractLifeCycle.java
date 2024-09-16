@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
  */
 @ManagedObject("Abstract Implementation of LifeCycle")
 public abstract class AbstractLifeCycle implements LifeCycle
+//public abstract class AbstractLifeCycle
 {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractLifeCycle.class);
 
@@ -296,38 +297,6 @@ public abstract class AbstractLifeCycle implements LifeCycle
         {
             if (listener instanceof Listener)
                 ((Listener)listener).lifeCycleFailure(this, th);
-        }
-    }
-
-    /**
-     * @deprecated this class is redundant now that {@link LifeCycle.Listener} has default methods.
-     */
-    @Deprecated
-    public abstract static class AbstractLifeCycleListener implements LifeCycle.Listener
-    {
-        @Override
-        public void lifeCycleFailure(LifeCycle event, Throwable cause)
-        {
-        }
-
-        @Override
-        public void lifeCycleStarted(LifeCycle event)
-        {
-        }
-
-        @Override
-        public void lifeCycleStarting(LifeCycle event)
-        {
-        }
-
-        @Override
-        public void lifeCycleStopped(LifeCycle event)
-        {
-        }
-
-        @Override
-        public void lifeCycleStopping(LifeCycle event)
-        {
         }
     }
 

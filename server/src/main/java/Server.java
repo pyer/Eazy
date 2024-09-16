@@ -43,7 +43,6 @@ import ab.eazy.util.Callback;
 import ab.eazy.util.DecoratedObjectFactory;
 import ab.eazy.util.ExceptionUtil;
 import ab.eazy.util.IO;
-import ab.eazy.util.Jetty;
 import ab.eazy.util.NanoTime;
 import ab.eazy.util.Uptime;
 import ab.eazy.util.annotation.ManagedAttribute;
@@ -74,7 +73,6 @@ public class Server extends Handler.Abstract implements Attributes
 //public class Server extends Handler.Abstract
 {
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
-    private static final String __serverInfo = "jetty/" + Server.getVersion();
 
     private final AttributeContainerMap _attributes = new AttributeContainerMap();
     private final ThreadPool _threadPool;
@@ -85,7 +83,6 @@ public class Server extends Handler.Abstract implements Attributes
 
     private final Context _serverContext = new ServerContext();
     private final AutoLock _dateLock = new AutoLock();
-    private String _serverInfo = __serverInfo;
     private boolean _stopAtShutdown;
     private Request.Handler _errorHandler = new ErrorHandler();
     private RequestLog _requestLog;
@@ -95,25 +92,7 @@ public class Server extends Handler.Abstract implements Attributes
 
     public Server()
     {
-        this((ThreadPool)null);
-        LOG.info("*** Server created ***");
-    }
-
-    public Server(@Name("threadPool") ThreadPool pool)
-    {
-        this(pool, null, null);
-        installBean(new DumpableMap("System Properties", System.getProperties()));
-    }
-
-    public Server(@Name("threadPool") ThreadPool threadPool, @Name("scheduler") Scheduler scheduler, @Name("bufferPool") ByteBufferPool bufferPool)
-    {
-        _threadPool = threadPool != null ? threadPool : new QueuedThreadPool();
-        installBean(_threadPool);
-        _scheduler = scheduler != null ? scheduler : new ScheduledExecutorScheduler();
-        installBean(_scheduler);
-        _bufferPool = bufferPool != null ? bufferPool : new ArrayByteBufferPool();
-        installBean(_bufferPool);
-        installBean(FileSystemPool.INSTANCE, false);
+        this(8080);
     }
 
     /**
@@ -125,12 +104,22 @@ public class Server extends Handler.Abstract implements Attributes
      */
     public Server(@Name("port") int port)
     {
-        this((ThreadPool)null);
+        _threadPool = new QueuedThreadPool();
+        installBean(_threadPool);
+        _scheduler = new ScheduledExecutorScheduler();
+        installBean(_scheduler);
+        _bufferPool = new ArrayByteBufferPool();
+        installBean(_bufferPool);
+        installBean(FileSystemPool.INSTANCE, false);
+
+        installBean(new DumpableMap("System Properties", System.getProperties()));
+
         ServerConnector connector = new ServerConnector(this);
         connector.setPort(port);
         _connectors.add(connector);
         addBean(connector);
         installBean(_attributes);
+        LOG.info("Server created");
     }
 
     @Override
@@ -152,11 +141,6 @@ public class Server extends Handler.Abstract implements Attributes
               break;
         }
         return ret;
-    }
-
-    public String getServerInfo()
-    {
-        return _serverInfo;
     }
 
     /**
@@ -201,11 +185,6 @@ public class Server extends Handler.Abstract implements Attributes
         return _tempDirectory;
     }
 
-    public void setServerInfo(String serverInfo)
-    {
-        _serverInfo = serverInfo;
-    }
-
     /**
      * Get the {@link Context} associated with all {@link Request}s prior to being handled by a
      * {@link ContextHandler}. A {@code Server}'s {@link Context}:
@@ -239,12 +218,6 @@ public class Server extends Handler.Abstract implements Attributes
         return _errorHandler;
     }
 
-
-    @ManagedAttribute("The version of this server")
-    public static String getVersion()
-    {
-        return Jetty.VERSION;
-    }
 
     public void setStopTimeout(long stopTimeout)
     {
@@ -370,9 +343,6 @@ public class Server extends Handler.Abstract implements Attributes
 
             //Start a thread waiting to receive "stop" commands.
             ShutdownMonitor.getInstance().start(); // initialize
-
-            String gitHash = Jetty.GIT_HASH;
-            String timestamp = Jetty.BUILD_TIMESTAMP;
 
             final ExceptionUtil.MultiException multiException = new ExceptionUtil.MultiException();
 
@@ -615,7 +585,7 @@ public class Server extends Handler.Abstract implements Attributes
     @Override
     public String toString()
     {
-        return String.format("%s[%s,sto=%d]", super.toString(), getVersion(), getStopTimeout());
+        return String.format("%s[stop=%d]", super.toString(), getStopTimeout());
     }
 
     @Override
@@ -628,12 +598,7 @@ public class Server extends Handler.Abstract implements Attributes
             FileSystemPool.INSTANCE);
     }
 
-/*
-    public static void main(String... args)
-    {
-        System.err.println(getVersion());
-    }
-*/
+
     private static class DateField
     {
         final long _seconds;
