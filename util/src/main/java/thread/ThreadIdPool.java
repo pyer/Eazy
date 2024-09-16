@@ -24,7 +24,6 @@ import java.util.function.Supplier;
 import ab.eazy.util.MemoryUtils;
 import ab.eazy.util.ProcessorUtils;
 import ab.eazy.util.TypeUtil;
-import ab.eazy.util.component.Dumpable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * when items do not reserve an index in the pool even when acquired.
  * @see ab.eazy.util.ConcurrentPool
  */
-public class ThreadIdPool<E> implements Dumpable
+public class ThreadIdPool<E>
 {
     private static final Logger LOG = LoggerFactory.getLogger(ThreadIdPool.class);
 
@@ -229,26 +228,4 @@ public class ThreadIdPool<E> implements Dumpable
         }
     }
 
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        int capacity = capacity();
-        List<Object> slots = new ArrayList<>(capacity);
-        for (int i = 0; i < capacity; i++)
-        {
-            E slot = _items.get(toSlot(i));
-            if (slot != null)
-                slots.add(Dumpable.named(Integer.toString(i), slot));
-        }
-        Dumpable.dumpObjects(out, indent, this, slots.toArray());
-    }
-
-    @Override
-    public String toString()
-    {
-        return String.format("%s@%x{capacity=%d}",
-            getClass().getSimpleName(),
-            hashCode(),
-            capacity());
-    }
 }

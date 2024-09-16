@@ -77,7 +77,7 @@ import org.slf4j.LoggerFactory;
  * </pre>
  */
 @ManagedObject("Implementation of Container and LifeCycle")
-public class ContainerLifeCycle extends AbstractLifeCycle implements Container, Destroyable, Dumpable.DumpableContainer
+public class ContainerLifeCycle extends AbstractLifeCycle implements Container, Destroyable
 {
     private static final Logger LOG = LoggerFactory.getLogger(ContainerLifeCycle.class);
     private final List<Bean> _beans = new CopyOnWriteArrayList<>();
@@ -733,62 +733,6 @@ public class ContainerLifeCycle extends AbstractLifeCycle implements Container, 
             return true;
         }
         return false;
-    }
-
-    /**
-     * Dumps to {@link System#err}.
-     *
-     * @see #dump()
-     */
-    @ManagedOperation("Dump the object to stderr")
-    public void dumpStdErr()
-    {
-        try
-        {
-            Dumpable.dump(this, System.err);
-            System.err.println();
-        }
-        catch (Throwable e)
-        {
-            LOG.warn("Unable to dump", e);
-        }
-    }
-
-    @Override
-    @ManagedOperation("Dump the object to a string")
-    public String dump()
-    {
-        return Dumpable.dump(this);
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        dumpObjects(out, indent);
-    }
-
-    /**
-     * Dump this object to an Appendable with no indent.
-     *
-     * @param out The appendable to dump to.
-     * @throws IOException May be thrown by the Appendable
-     */
-    public void dump(Appendable out) throws IOException
-    {
-        dump(out, "");
-    }
-
-    /**
-     * Dump this object, it's contained beans and additional items to an Appendable
-     *
-     * @param out The appendable to dump to
-     * @param indent The indent to apply after any new lines
-     * @param items Additional items to be dumped as contained.
-     * @throws IOException May be thrown by the Appendable
-     */
-    protected void dumpObjects(Appendable out, String indent, Object... items) throws IOException
-    {
-        Dumpable.dumpObjects(out, indent, this, items);
     }
 
     enum Managed

@@ -29,8 +29,6 @@ import ab.eazy.util.VirtualThreads;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.component.ContainerLifeCycle;
-import ab.eazy.util.component.Dumpable;
-import ab.eazy.util.component.DumpableCollection;
 
 /**
  * A {@link ab.eazy.util.thread.ThreadPool.SizedThreadPool} wrapper around {@link ThreadPoolExecutor}.
@@ -47,7 +45,6 @@ public class ExecutorThreadPool extends ContainerLifeCycle implements ThreadPool
     private TryExecutor _tryExecutor = TryExecutor.NO_TRY;
     private int _priority = Thread.NORM_PRIORITY;
     private boolean _daemon;
-    private boolean _detailedDump;
     private Executor _virtualThreadsExecutor;
 
     public ExecutorThreadPool()
@@ -227,17 +224,6 @@ public class ExecutorThreadPool extends ContainerLifeCycle implements ThreadPool
         _daemon = daemon;
     }
 
-    @ManagedAttribute("reports additional details in the dump")
-    public boolean isDetailedDump()
-    {
-        return _detailedDump;
-    }
-
-    public void setDetailedDump(boolean detailedDump)
-    {
-        _detailedDump = detailedDump;
-    }
-
     @Override
     @ManagedAttribute("number of threads in the pool")
     public int getThreads()
@@ -338,97 +324,4 @@ public class ExecutorThreadPool extends ContainerLifeCycle implements ThreadPool
         return thread;
     }
 
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        String prefix = getName() + "-";
-        List<Dumpable> threads = Thread.getAllStackTraces().entrySet().stream()
-            .filter(entry -> entry.getKey().getName().startsWith(prefix))
-            .map(entry ->
-            {
-                Thread thread = entry.getKey();
-                StackTraceElement[] frames = entry.getValue();
-                String knownMethod = null;
-                for (StackTraceElement frame : frames)
-                {
-                    if ("getTask".equals(frame.getMethodName()) && frame.getClassName().endsWith("ThreadPoolExecutor"))
-                    {
-                        knownMethod = "IDLE ";
-                        break;
-                    }
-                    else if ("reservedWait".equals(frame.getMethodName()) && frame.getClassName().endsWith("ReservedThread"))
-                    {
-                        knownMethod = "RESERVED ";
-                        break;
-                    }
-                    else if ("select".equals(frame.getMethodName()) && frame.getClassName().endsWith("SelectorProducer"))
-                    {
-                        knownMethod = "SELECTING ";
-                        break;
-                    }
-                    else if ("accept".equals(frame.getMethodName()) && frame.getClassName().contains("ServerConnector"))
-                    {
-                        knownMethod = "ACCEPTING ";
-                        break;
-                    }
-                }
-                String known = knownMethod == null ? "" : knownMethod;
-                return new Dumpable()
-                {
-                    @Override
-                    public void dump(Appendable out, String indent) throws IOException
-                    {
-                        StringBuilder b = new StringBuilder();
-                        b.append(String.valueOf(thread.getId()))
-                            .append(" ")
-                            .append(thread.getName())
-                            .append(" p=").append(String.valueOf(thread.getPriority()))
-                            .append(" ")
-                            .append(known)
-                            .append(thread.getState().toString());
-
-                        if (isDetailedDump())
-                        {
-                            if (known.isEmpty())
-                                Dumpable.dumpObjects(out, indent, b.toString(), (Object[])frames);
-                            else
-                                Dumpable.dumpObject(out, b.toString());
-                        }
-                        else
-                        {
-                            b.append(" @ ").append(frames.length > 0 ? String.valueOf(frames[0]) : "<no_stack_frames>");
-                            Dumpable.dumpObject(out, b.toString());
-                        }
-                    }
-
-                    @Override
-                    public String dump()
-                    {
-                        return null;
-                    }
-                };
-            })
-            .collect(Collectors.toList());
-
-        List<Runnable> jobs = Collections.emptyList();
-        if (isDetailedDump())
-            jobs = new ArrayList<>(_executor.getQueue());
-        dumpObjects(out, indent, threads, new DumpableCollection("jobs", jobs));
-    }
-
-    @Override
-    public String toString()
-    {
-        return String.format("%s[%s]@%x{%s,%d<=%d<=%d,i=%d,q=%d,%s}",
-            getClass().getSimpleName(),
-            getName(),
-            hashCode(),
-            getState(),
-            getMinThreads(),
-            getThreads(),
-            getMaxThreads(),
-            getIdleThreads(),
-            _executor.getQueue().size(),
-            _tryExecutor);
-    }
 }

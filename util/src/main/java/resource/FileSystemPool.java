@@ -36,8 +36,6 @@ import ab.eazy.util.URIUtil;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.annotation.ManagedOperation;
-import ab.eazy.util.component.Dumpable;
-import ab.eazy.util.component.DumpableCollection;
 import ab.eazy.util.thread.AutoLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * TODO figure out if this should be a LifeCycle or not, how many instances of this class can reside in a JVM, who can call sweep and when.
  */
 @ManagedObject("Pool of FileSystems used to mount Resources")
-public class FileSystemPool implements Dumpable
+public class FileSystemPool
 {
     private static final Logger LOG = LoggerFactory.getLogger(FileSystemPool.class);
     public static final FileSystemPool INSTANCE = new FileSystemPool();
@@ -248,18 +246,6 @@ public class FileSystemPool implements Dumpable
         {
             return pool.values().stream().map(m -> m.mount).toList();
         }
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        Collection<Bucket> values;
-        try (AutoLock ignore = poolLock.lock())
-        {
-            values = pool.values();
-        }
-        Dumpable.dumpObjects(out, indent, this,
-            new DumpableCollection("buckets", values));
     }
 
     @ManagedOperation(value = "Sweep the pool for deleted mount points", impact = "ACTION")

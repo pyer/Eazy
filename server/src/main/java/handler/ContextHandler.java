@@ -53,8 +53,6 @@ import ab.eazy.util.TypeUtil;
 import ab.eazy.util.URIUtil;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
-import ab.eazy.util.component.ClassLoaderDump;
-import ab.eazy.util.component.DumpableAttributes;
 import ab.eazy.util.component.LifeCycle;
 import ab.eazy.util.resource.Resource;
 import ab.eazy.util.resource.ResourceFactory;
@@ -254,15 +252,6 @@ public class ContextHandler extends Handler.Abstract implements Attributes, Alia
     public boolean isTempDirectoryPersistent()
     {
         return _tempDirectoryPersisted;
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        dumpObjects(out, indent,
-            new ClassLoaderDump(getClassLoader()),
-            new DumpableAttributes("handler attributes", _persistentAttributes),
-            new DumpableAttributes("attributes", _context));
     }
 
     @ManagedAttribute(value = "Context")

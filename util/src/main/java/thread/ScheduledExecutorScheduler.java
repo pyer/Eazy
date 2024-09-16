@@ -25,7 +25,6 @@ import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.annotation.Name;
 import ab.eazy.util.component.AbstractLifeCycle;
-import ab.eazy.util.component.Dumpable;
 
 /**
  * Implementation of {@link Scheduler} based on JDK's {@link ScheduledThreadPoolExecutor}.
@@ -36,7 +35,7 @@ import ab.eazy.util.component.Dumpable;
  * of garbage collection in young generation.
  */
 @ManagedObject
-public class ScheduledExecutorScheduler extends AbstractLifeCycle implements Scheduler, Dumpable
+public class ScheduledExecutorScheduler extends AbstractLifeCycle implements Scheduler
 {
     private final String name;
     private final boolean daemon;
@@ -141,22 +140,6 @@ public class ScheduledExecutorScheduler extends AbstractLifeCycle implements Sch
             return () -> false;
         ScheduledFuture<?> result = s.schedule(task, delay, unit);
         return new ScheduledFutureTask(result);
-    }
-
-    @Override
-    public String dump()
-    {
-        return Dumpable.dump(this);
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        Thread thread = this.thread;
-        if (thread == null)
-            Dumpable.dumpObject(out, this);
-        else
-            Dumpable.dumpObjects(out, indent, this, (Object[])thread.getStackTrace());
     }
 
     private static class ScheduledFutureTask implements Task

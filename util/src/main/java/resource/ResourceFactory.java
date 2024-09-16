@@ -30,7 +30,6 @@ import ab.eazy.util.FileID;
 import ab.eazy.util.StringUtil;
 import ab.eazy.util.URIUtil;
 import ab.eazy.util.component.Container;
-import ab.eazy.util.component.Dumpable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -667,7 +666,7 @@ public interface ResourceFactory
         void close();
     }
 
-    interface LifeCycle extends ab.eazy.util.component.LifeCycle, ResourceFactory, Dumpable
+    interface LifeCycle extends ab.eazy.util.component.LifeCycle, ResourceFactory
     {
     }
 }

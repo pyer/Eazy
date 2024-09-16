@@ -28,8 +28,6 @@ import java.util.stream.Stream;
 
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
-import ab.eazy.util.component.Dumpable;
-import ab.eazy.util.component.DumpableCollection;
 import ab.eazy.util.thread.AutoLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,7 @@ import org.slf4j.LoggerFactory;
  * @param <P> the type of the pooled objects
  */
 @ManagedObject
-public class ConcurrentPool<P> implements Pool<P>, Dumpable
+public class ConcurrentPool<P> implements Pool<P>
 {
     /**
      * {@link ConcurrentPool} internally needs to linearly scan a list to perform an acquisition.
@@ -388,27 +386,6 @@ public class ConcurrentPool<P> implements Pool<P>, Dumpable
                 count++;
         }
         return count;
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        Dumpable.dumpObjects(out, indent, this,
-            new DumpableCollection("entries", entries));
-    }
-
-    @Override
-    public String toString()
-    {
-        return String.format("%s@%x[strategy=%s,inUse=%d,size=%d,max=%d,leaked=%d,terminated=%b]",
-            getClass().getSimpleName(),
-            hashCode(),
-            strategyType,
-            getInUseCount(),
-            size(),
-            getMaxSize(),
-            getLeaked(),
-            isTerminated());
     }
 
     /**

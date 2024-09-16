@@ -36,8 +36,6 @@ import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.annotation.ManagedOperation;
 import ab.eazy.util.annotation.Name;
 import ab.eazy.util.component.ContainerLifeCycle;
-import ab.eazy.util.component.Dumpable;
-import ab.eazy.util.component.DumpableCollection;
 import ab.eazy.util.thread.ThreadPool.SizedThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +75,7 @@ import org.slf4j.LoggerFactory;
  * </ul>
  */
 @ManagedObject("A thread pool")
-public class QueuedThreadPool extends ContainerLifeCycle implements ThreadFactory, SizedThreadPool, Dumpable, TryExecutor, VirtualThreads.Configurable
+public class QueuedThreadPool extends ContainerLifeCycle implements ThreadFactory, SizedThreadPool, TryExecutor, VirtualThreads.Configurable
 {
     private static final Logger LOG = LoggerFactory.getLogger(QueuedThreadPool.class);
     private static final Runnable NOOP = () ->
@@ -108,7 +106,6 @@ public class QueuedThreadPool extends ContainerLifeCycle implements ThreadFactor
     private TryExecutor _tryExecutor = TryExecutor.NO_TRY;
     private int _priority = Thread.NORM_PRIORITY;
     private boolean _daemon = false;
-    private boolean _detailedDump = false;
     private int _lowThreadsThreshold = 1;
     private ThreadPoolBudget _budget;
     private long _stopTimeout;
@@ -504,17 +501,6 @@ public class QueuedThreadPool extends ContainerLifeCycle implements ThreadFactor
     public void setDaemon(boolean daemon)
     {
         _daemon = daemon;
-    }
-
-    @ManagedAttribute("reports additional details in the dump")
-    public boolean isDetailedDump()
-    {
-        return _detailedDump;
-    }
-
-    public void setDetailedDump(boolean detailedDump)
-    {
-        _detailedDump = detailedDump;
     }
 
     @ManagedAttribute("threshold at which the pool is low on threads")
@@ -923,47 +909,6 @@ public class QueuedThreadPool extends ContainerLifeCycle implements ThreadFactor
     protected void removeThread(Thread thread)
     {
         _threads.remove(thread);
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        List<Object> threads = new ArrayList<>(getMaxThreads());
-        for (Thread thread : _threads)
-        {
-            StackTraceElement[] trace = thread.getStackTrace();
-            String stackTag = getCompressedStackTag(trace);
-            String baseThreadInfo = String.format("%s %s tid=%d prio=%d", thread.getName(), thread.getState(), thread.getId(), thread.getPriority());
-
-            if (!StringUtil.isBlank(stackTag))
-                threads.add(baseThreadInfo + " " + stackTag);
-            else if (isDetailedDump())
-                threads.add((Dumpable)(o, i) -> Dumpable.dumpObjects(o, i, baseThreadInfo, (Object[])trace));
-            else
-                threads.add(baseThreadInfo + " @ " + (trace.length > 0 ? trace[0].toString() : "???"));
-        }
-
-        DumpableCollection threadsDump = new DumpableCollection("threads", threads);
-        if (isDetailedDump())
-            dumpObjects(out, indent, threadsDump, new DumpableCollection("jobs", new ArrayList<>(getQueue())));
-        else
-            dumpObjects(out, indent, threadsDump);
-    }
-
-    private String getCompressedStackTag(StackTraceElement[] trace)
-    {
-        for (StackTraceElement t : trace)
-        {
-            if ("idleJobPoll".equals(t.getMethodName()) && t.getClassName().equals(Runner.class.getName()))
-                return "IDLE";
-            if ("reservedWait".equals(t.getMethodName()) && t.getClassName().endsWith("ReservedThread"))
-                return "RESERVED";
-            if ("select".equals(t.getMethodName()) && t.getClassName().endsWith("SelectorProducer"))
-                return "SELECTING";
-            if ("accept".equals(t.getMethodName()) && t.getClassName().contains("ServerConnector"))
-                return  "ACCEPTING";
-        }
-        return "";
     }
 
     private final Runnable _runnable = new Runner();

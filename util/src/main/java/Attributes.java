@@ -27,8 +27,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicReference;
 
-import ab.eazy.util.component.Dumpable;
-
 /**
  * Attributes.
  * Interface commonly used for storing attributes.
@@ -345,7 +343,7 @@ public interface Attributes
     /**
      * An {@link Attributes} implementation that lazily creates a backing map iff it is actually needed.
      */
-    class Lazy implements Attributes, Dumpable
+    class Lazy implements Attributes
     {
         private final AtomicReference<ConcurrentMap<String, Object>> _map = new AtomicReference<>();
 
@@ -436,18 +434,6 @@ public interface Attributes
         {
             for (String name : attributes.getAttributeNameSet())
                 setAttribute(name, attributes.getAttribute(name));
-        }
-
-        @Override
-        public String dump()
-        {
-            return Dumpable.dump(this);
-        }
-
-        @Override
-        public void dump(Appendable out, String indent) throws IOException
-        {
-            Dumpable.dumpObjects(out, indent, String.format("%s@%x", this.getClass().getSimpleName(), hashCode()), map());
         }
 
         @Override

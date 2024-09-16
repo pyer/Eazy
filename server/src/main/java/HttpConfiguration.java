@@ -34,8 +34,6 @@ import ab.eazy.util.Index;
 import ab.eazy.util.URIUtil;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
-import ab.eazy.util.component.Dumpable;
-import ab.eazy.util.component.DumpableCollection;
 
 /**
  * HTTP Configuration.
@@ -48,7 +46,7 @@ import ab.eazy.util.component.DumpableCollection;
  * </p>
  */
 @ManagedObject("HTTP Configuration")
-public class HttpConfiguration implements Dumpable
+public class HttpConfiguration
 {
     public static final String SERVER_VERSION = "Eazy 1.0.0";
     public static final String POWERED_BY = "Powered by Eazy 1.0.0";
@@ -816,53 +814,4 @@ public class HttpConfiguration implements Dumpable
         return _maxUnconsumedRequestContentReads;
     }
 
-    @Override
-    public String dump()
-    {
-        return Dumpable.dump(this);
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        Dumpable.dumpObjects(out, indent, this,
-            new DumpableCollection("customizers", _customizers),
-            new DumpableCollection("formEncodedMethods", _formEncodedMethods.keySet()),
-            "outputBufferSize=" + _outputBufferSize,
-            "outputAggregationSize=" + _outputAggregationSize,
-            "requestHeaderSize=" + _requestHeaderSize,
-            "responseHeaderSize=" + _responseHeaderSize,
-            "headerCacheSize=" + _headerCacheSize,
-            "secureScheme=" + _secureScheme,
-            "securePort=" + _securePort,
-            "idleTimeout=" + _idleTimeout,
-            "sendDateHeader=" + _sendDateHeader,
-            "sendServerVersion=" + _sendServerVersion,
-            "sendXPoweredBy=" + _sendXPoweredBy,
-            "delayDispatchUntilContent=" + _delayDispatchUntilContent,
-            "persistentConnectionsEnabled=" + _persistentConnectionsEnabled,
-            "maxErrorDispatches=" + _maxErrorDispatches,
-            "minRequestDataRate=" + _minRequestDataRate,
-            "minResponseDataRate=" + _minResponseDataRate,
-            "requestCookieCompliance=" + _requestCookieCompliance,
-            "responseCookieCompliance=" + _responseCookieCompliance,
-            "notifyRemoteAsyncErrors=" + _notifyRemoteAsyncErrors,
-            "relativeRedirectAllowed=" + _relativeRedirectAllowed
-        );
-    }
-
-    @Override
-    public String toString()
-    {
-        return String.format("%s@%x{%d/%d,%d/%d,%s://:%d,%s}",
-            this.getClass().getSimpleName(),
-            hashCode(),
-            _outputBufferSize,
-            _outputAggregationSize,
-            _requestHeaderSize,
-            _responseHeaderSize,
-            _secureScheme,
-            _securePort,
-            _customizers);
-    }
 }

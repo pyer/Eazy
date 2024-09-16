@@ -42,7 +42,6 @@ import ab.eazy.util.StringUtil;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.component.ContainerLifeCycle;
-import ab.eazy.util.component.Dumpable;
 import ab.eazy.util.thread.AutoLock;
 import ab.eazy.util.thread.ScheduledExecutorScheduler;
 import ab.eazy.util.thread.Scheduler;
@@ -131,7 +130,7 @@ import org.slf4j.LoggerFactory;
  * sufficient for modern persistent protocols (HTTP/1.1, HTTP/2 etc.)
  */
 @ManagedObject("Abstract implementation of the Connector Interface")
-public abstract class AbstractConnector extends ContainerLifeCycle implements Connector, Dumpable
+public abstract class AbstractConnector extends ContainerLifeCycle implements Connector
 {
     protected static final Logger LOG = LoggerFactory.getLogger(AbstractConnector.class);
 

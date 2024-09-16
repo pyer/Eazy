@@ -43,8 +43,6 @@ import ab.eazy.util.IO;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedOperation;
 import ab.eazy.util.component.ContainerLifeCycle;
-import ab.eazy.util.component.Dumpable;
-import ab.eazy.util.component.DumpableCollection;
 import ab.eazy.util.statistic.SampleStatistic;
 import ab.eazy.util.thread.AutoLock;
 import ab.eazy.util.thread.ExecutionStrategy;
@@ -59,7 +57,7 @@ import org.slf4j.LoggerFactory;
  * happen for registered channels. When events happen, it notifies the {@link EndPoint} associated
  * with the channel.</p>
  */
-public class ManagedSelector extends ContainerLifeCycle implements Dumpable
+public class ManagedSelector extends ContainerLifeCycle
 {
     private static final Logger LOG = LoggerFactory.getLogger(ManagedSelector.class);
     private static final boolean FORCE_SELECT_NOW;
@@ -446,56 +444,6 @@ public class ManagedSelector extends ContainerLifeCycle implements Dumpable
         }
     }
 
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        List<String> keys;
-        List<SelectorUpdate> updates;
-        Selector selector = _selector;
-        if (selector != null && selector.isOpen())
-        {
-            DumpKeys dump = new DumpKeys();
-            String updatesAt = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.now());
-            try (AutoLock l = _lock.lock())
-            {
-                updates = new ArrayList<>(_updates);
-                _updates.addFirst(dump);
-                _selecting = false;
-            }
-            if (LOG.isDebugEnabled())
-                LOG.debug("wakeup on dump {}", this);
-            selector.wakeup();
-            keys = dump.get(5, TimeUnit.SECONDS);
-            String keysAt = DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(ZonedDateTime.now());
-            if (keys == null)
-                keys = Collections.singletonList("No dump keys retrieved");
-
-            dumpObjects(out, indent,
-                new DumpableCollection("updates @ " + updatesAt, updates),
-                new DumpableCollection("keys @ " + keysAt, keys));
-        }
-        else
-        {
-            dumpObjects(out, indent);
-        }
-    }
-
-    @Override
-    public String toString()
-    {
-        Selector selector = _selector;
-        return String.format("%s[id=%s keys=%d selected=%d updates=%d selection:tot=%d/avg=%.2f/max=%d]",
-            super.toString(),
-            _id,
-            selector != null && selector.isOpen() ? selector.keys().size() : -1,
-            selector != null && selector.isOpen() ? selector.selectedKeys().size() : -1,
-            getActionSize(),
-            getSelectCount(),
-            getAverageSelectedKeys(),
-            getMaxSelectedKeys()
-        );
-    }
-
     /**
      * A {@link Selectable} is an {@link EndPoint} that wish to be
      * notified of non-blocking events by the {@link ManagedSelector}.
@@ -747,39 +695,6 @@ public class ManagedSelector extends ContainerLifeCycle implements Dumpable
         {
             ManagedSelector.this._started.set(true);
             _started.countDown();
-        }
-    }
-
-    private static class DumpKeys implements SelectorUpdate
-    {
-        private final CountDownLatch latch = new CountDownLatch(1);
-        private List<String> keys;
-
-        @Override
-        public void update(Selector selector)
-        {
-            Set<SelectionKey> selectorKeys = selector.keys();
-            List<String> list = new ArrayList<>(selectorKeys.size());
-            for (SelectionKey key : selectorKeys)
-            {
-                if (key != null)
-                    list.add(String.format("SelectionKey@%x{i=%d}->%s", key.hashCode(), safeInterestOps(key), key.attachment()));
-            }
-            keys = list;
-            latch.countDown();
-        }
-
-        public List<String> get(long timeout, TimeUnit unit)
-        {
-            try
-            {
-                latch.await(timeout, unit);
-            }
-            catch (InterruptedException x)
-            {
-                LOG.trace("IGNORED", x);
-            }
-            return keys;
         }
     }
 

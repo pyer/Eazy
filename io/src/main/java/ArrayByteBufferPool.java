@@ -38,8 +38,6 @@ import ab.eazy.util.Pool;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.annotation.ManagedOperation;
-import ab.eazy.util.component.Dumpable;
-import ab.eazy.util.component.DumpableCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +51,7 @@ import org.slf4j.LoggerFactory;
  * divided by 8.</p>
  */
 @ManagedObject
-public class ArrayByteBufferPool implements ByteBufferPool, Dumpable
+public class ArrayByteBufferPool implements ByteBufferPool
 {
     static final int DEFAULT_FACTOR = 4096;
     static final int DEFAULT_MAX_CAPACITY_BY_FACTOR = 16;
@@ -436,28 +434,6 @@ public class ArrayByteBufferPool implements ByteBufferPool, Dumpable
         {
             bucket.clear();
         }
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        Dumpable.dumpObjects(
-            out,
-            indent,
-            this,
-            DumpableCollection.fromArray("direct", _direct),
-            DumpableCollection.fromArray("indirect", _indirect));
-    }
-
-    @Override
-    public String toString()
-    {
-        return String.format("%s{min=%d,max=%d,buckets=%d,heap=%d/%d,direct=%d/%d}",
-            super.toString(),
-            _minCapacity, _maxCapacity,
-            _direct.length,
-            getHeapMemory(), _maxHeapMemory,
-            getDirectMemory(), _maxDirectMemory);
     }
 
     private class RetainedBucket

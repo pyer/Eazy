@@ -49,11 +49,6 @@ import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.annotation.Name;
 import ab.eazy.util.component.AttributeContainerMap;
-import ab.eazy.util.component.ClassLoaderDump;
-import ab.eazy.util.component.DumpableAttributes;
-import ab.eazy.util.component.DumpableCollection;
-import ab.eazy.util.component.DumpableMap;
-import ab.eazy.util.component.Environment;
 import ab.eazy.util.component.Graceful;
 import ab.eazy.util.component.LifeCycle;
 import ab.eazy.util.resource.FileSystemPool;
@@ -111,8 +106,6 @@ public class Server extends Handler.Abstract implements Attributes
         _bufferPool = new ArrayByteBufferPool();
         installBean(_bufferPool);
         installBean(FileSystemPool.INSTANCE, false);
-
-        installBean(new DumpableMap("System Properties", System.getProperties()));
 
         ServerConnector connector = new ServerConnector(this);
         connector.setPort(port);
@@ -400,11 +393,6 @@ public class Server extends Handler.Abstract implements Attributes
             });
             throw th;
         }
-        finally
-        {
-          if (LOG.isDebugEnabled())
-            dumpStdErr();
-        }
     }
 
     @Override
@@ -419,7 +407,6 @@ public class Server extends Handler.Abstract implements Attributes
     protected void doStop() throws Exception
     {
         LOG.info(String.format("Stopped %s", this));
-        dumpStdErr();
         Throwable multiException = null;
 
         if (getStopTimeout() > 0)
@@ -469,11 +456,6 @@ public class Server extends Handler.Abstract implements Attributes
         ShutdownMonitor.deregister(this);
 
         ExceptionUtil.ifExceptionThrow(multiException);
-    }
-
-    public void join() throws InterruptedException
-    {
-        getThreadPool().join();
     }
 
     @Override
@@ -587,17 +569,6 @@ public class Server extends Handler.Abstract implements Attributes
     {
         return String.format("%s[stop=%d]", super.toString(), getStopTimeout());
     }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        dumpObjects(out, indent,
-            new ClassLoaderDump(this.getClass().getClassLoader()),
-            new DumpableCollection("environments", Environment.getAll()),
-            new DumpableAttributes("attributes", _attributes),
-            FileSystemPool.INSTANCE);
-    }
-
 
     private static class DateField
     {

@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 import ab.eazy.util.Index;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
-import ab.eazy.util.component.Dumpable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * @param <E> the type of mapping endpoint
  */
 @ManagedObject("Path Mappings")
-public class PathMappings<E> extends AbstractMap<PathSpec, E> implements Iterable<MappedResource<E>>, Dumpable, Predicate<String>
+public class PathMappings<E> extends AbstractMap<PathSpec, E> implements Iterable<MappedResource<E>>, Predicate<String>
 {
     private static final Logger LOG = LoggerFactory.getLogger(PathMappings.class);
     // In prefix matches, this is the length ("/*".length() + 1) - used for the best prefix match loop
@@ -75,18 +74,6 @@ public class PathMappings<E> extends AbstractMap<PathSpec, E> implements Iterabl
         @SuppressWarnings("unchecked")
         Set<Map.Entry<PathSpec, E>> entries = (Set<Map.Entry<PathSpec, E>>)(Set<? extends Map.Entry<PathSpec, E>>)_mappings;
         return entries;
-    }
-
-    @Override
-    public String dump()
-    {
-        return Dumpable.dump(this);
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        Dumpable.dumpObjects(out, indent, toString(), _mappings);
     }
 
     @ManagedAttribute(value = "mappings", readonly = true)

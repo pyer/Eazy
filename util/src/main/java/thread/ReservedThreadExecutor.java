@@ -26,7 +26,6 @@ import ab.eazy.util.VirtualThreads;
 import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.component.ContainerLifeCycle;
-import ab.eazy.util.component.Dumpable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * the external Executor.</p>
  */
 @ManagedObject("A pool for reserved threads")
-public class ReservedThreadExecutor extends ContainerLifeCycle implements TryExecutor, Dumpable
+public class ReservedThreadExecutor extends ContainerLifeCycle implements TryExecutor
 {
     private static final Logger LOG = LoggerFactory.getLogger(ReservedThreadExecutor.class);
 
@@ -242,22 +241,6 @@ public class ReservedThreadExecutor extends ContainerLifeCycle implements TryExe
             if (LOG.isDebugEnabled())
                 LOG.debug("ignored", e);
         }
-    }
-
-    @Override
-    public void dump(Appendable out, String indent) throws IOException
-    {
-        Dumpable.dumpObjects(out, indent, this);
-    }
-
-    @Override
-    public String toString()
-    {
-        return String.format("%s@%x{capacity=%d,threads=%s}",
-            getClass().getSimpleName(),
-            hashCode(),
-            getCapacity(),
-            _threads);
     }
 
     private class ReservedThread implements Runnable

@@ -27,8 +27,6 @@ import ab.eazy.util.Index;
 import ab.eazy.util.StringUtil;
 import ab.eazy.util.URIUtil;
 import ab.eazy.util.component.AbstractLifeCycle;
-import ab.eazy.util.component.Dumpable;
-import ab.eazy.util.component.DumpableCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,14 +173,6 @@ class ResourceFactoryInternals
             super.doStop();
         }
 
-        @Override
-        public void dump(Appendable out, String indent) throws IOException
-        {
-            List<URI> referencedUris = _compositeResourceFactory.getMounts().stream()
-                .map(mount -> mount.root().getURI())
-                .toList();
-            Dumpable.dumpObjects(out, indent, this, new DumpableCollection("newResourceReferences", referencedUris));
-        }
     }
 
     static class CompositeResourceFactory implements ResourceFactory

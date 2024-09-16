@@ -35,7 +35,6 @@ import ab.eazy.util.annotation.ManagedAttribute;
 import ab.eazy.util.annotation.ManagedObject;
 import ab.eazy.util.component.Container;
 import ab.eazy.util.component.ContainerLifeCycle;
-import ab.eazy.util.component.Dumpable;
 import ab.eazy.util.thread.Scheduler;
 import ab.eazy.util.thread.ThreadPool;
 import ab.eazy.util.thread.ThreadPoolBudget;
@@ -50,7 +49,7 @@ import org.slf4j.LoggerFactory;
  */
 
 @ManagedObject("Manager of the NIO Selectors")
-public abstract class SelectorManager extends ContainerLifeCycle implements Dumpable
+public abstract class SelectorManager extends ContainerLifeCycle
 {
     public static final int DEFAULT_CONNECT_TIMEOUT = 15000;
     private static final Logger LOG = LoggerFactory.getLogger(SelectorManager.class);
