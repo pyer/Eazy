@@ -1,13 +1,5 @@
 package ab.eazy.logging;
 
-/*
-public interface EazyAppender
-{
-    void emit(EazyLogger logger, Level level, long timestamp, String threadName,
-              Throwable throwable, String message, Object... argumentArray);
-}
-*/
-
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.IdentityHashMap;
